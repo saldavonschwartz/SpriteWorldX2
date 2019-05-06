@@ -1,0 +1,8 @@
+xcuserdata
+*.xcuserstate
+*.o
+*.a
+*.dlyb
+*.dll
+*.xcscheme
+.DS_Store
