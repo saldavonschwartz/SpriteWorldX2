@@ -3,7 +3,7 @@ An SDL2 port of SpriteWorld / SpriteWorldX.
 
 ### About:
 
-This is an SDL2-compatible port of (https://sourceforge.net/projects/spriteworld/)[Spriteworld] / (https://sourceforge.net/projects/spriteworldx/)[SpriteWorldX]. It was done as a somewhat quick stepping stone in getting a game based on the original SpriteWorld to run in current hardware and SDL2.
+This is an SDL2-compatible port of [https://sourceforge.net/projects/spriteworld/][Spriteworld] / (https://sourceforge.net/projects/spriteworldx/)[SpriteWorldX]. It was done as a somewhat quick stepping stone in getting a game based on the original SpriteWorld to run in current hardware and SDL2.
 
 SpriteWorldX2 is released under MIT license. It's ancestors were released under zlipb.
 
