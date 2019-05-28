@@ -62,6 +62,7 @@ AssertFailProcPtr	gSWAssertFailProc = &SWAssertFail; //moved from spriteworlduti
 #define CMASK_MODE 2
 
 void sdl2ctx_show() {
+  SDL_RenderClear(sdl2ctx.renderer);
   SDL_UpdateTexture(sdl2ctx.gpuBuffer, NULL, sdl2ctx.cpuBuffer->pixels, sdl2ctx.cpuBuffer->pitch);
   SDL_RenderCopy(sdl2ctx.renderer, sdl2ctx.gpuBuffer, NULL, NULL);
   SDL_RenderPresent(sdl2ctx.renderer);
@@ -170,10 +171,12 @@ SWError SWCreateSpriteWorld(
     return err;
   }
   
+  SDL_SetRenderDrawColor(sdl2ctx.renderer, 0, 0, 0, 255);
+  SDL_RenderClear(sdl2ctx.renderer);
+  
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_RenderSetLogicalSize(sdl2ctx.renderer, lw, lh);
   
-  SDL_SetRenderDrawColor(sdl2ctx.renderer, 0, 0, 0, 255);
   sdl2ctx.cpuBuffer = SDL_CreateRGBSurface(0, lw, lh, depth, sdl2ctx.cmask[0], sdl2ctx.cmask[1], sdl2ctx.cmask[2], sdl2ctx.cmask[3]);
   sdl2ctx.gpuBuffer = SDL_CreateTexture(sdl2ctx.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, lw, lh);
   err = SWCreateSpriteWorldFromVideoSurface(spriteWorldPP, sdl2ctx.cpuBuffer, &worldRect, &worldRect, 0 );
