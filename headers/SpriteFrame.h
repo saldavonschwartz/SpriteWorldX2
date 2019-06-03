@@ -14,7 +14,7 @@
 #include <math.h>
 
 #ifndef _SDL_H
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #endif
 
 
@@ -23,7 +23,7 @@
 #endif
 
 #ifndef _IMG_h
-#include <SDL2/SDL_image.h>
+#include <SDL_image.h>
 #endif
 
 #ifdef __cplusplus

@@ -16,7 +16,7 @@
 #include <math.h>
 
 #ifndef _SDL_H
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #endif
 
 #ifndef __SWCOMMON__
