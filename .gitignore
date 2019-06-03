@@ -6,3 +6,5 @@ xcuserdata
 *.dll
 *.xcscheme
 .DS_Store
+.vscode/
+build/

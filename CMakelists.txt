@@ -1,0 +1,47 @@
+cmake_minimum_required(VERSION 3.12)
+project(SpriteWorldX2)
+set(LIB_NAME swx2)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/)
+
+add_library(${LIB_NAME} STATIC 
+sources/SpriteWorld.c
+sources/Sprite.c
+sources/SpriteCreation.c
+sources/SpriteLayer.c
+sources/SpriteFrame.c
+sources/SpriteWorldUtils.c
+sources/Scrolling.c
+sources/Tiling.c
+
+headers/SpriteWorld.h
+headers/Sprite.h
+headers/SpriteCreation.h
+headers/SpriteLayer.h
+headers/SpriteFrame.h
+headers/SpriteWorldUtils.h
+headers/Scrolling.h
+headers/Tiling.h
+headers/SWIncludes.h
+headers/SWCommonHeaders.h
+
+contrib/StaticText.h
+contrib/StaticText.c
+)
+
+target_include_directories(${LIB_NAME} PUBLIC
+${PROJECT_SOURCE_DIR}/contrib 
+${PROJECT_SOURCE_DIR}/headers
+${PROJECT_SOURCE_DIR}/Utils
+)
+
+find_package(SDL2 REQUIRED)
+target_include_directories(${LIB_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
+target_link_libraries(${LIB_NAME} ${SDL2_LIBRARIES})
+
+find_package(SDL2_image REQUIRED)
+target_include_directories(${LIB_NAME} PRIVATE ${SDL2_IMAGE_INCLUDE_DIRS})
+target_link_libraries(${LIB_NAME} ${SDL2_IMAGE_LIBRARIES})
+
+find_package(SDL2_ttf REQUIRED)
+target_include_directories(${LIB_NAME} PRIVATE ${SDL2_TTF_INCLUDE_DIRS})
+target_link_libraries(${LIB_NAME} ${SDL2_TTF_LIBRARIES})
