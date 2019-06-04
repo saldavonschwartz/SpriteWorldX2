@@ -1,5 +1,3 @@
-set(SDL2_TTF_PATH "" CACHE STRING "SDL2_ttf lib/include root path")
-
 if (SDL2_TTF_PATH)
     if(APPLE)
         set(SDL2_TTF_INCLUDE_DIR ${SDL2_TTF_PATH}/SDL2_ttf.framework/Headers) 
@@ -7,7 +5,8 @@ if (SDL2_TTF_PATH)
     endif()
 else()
     message("downloading SDL2_ttf...")
-    
+    set(SDL2_TTF_PATH "some path" CACHE STRING "SDL2_ttf lib/include root path")
+
     if(APPLE)
         file(DOWNLOAD
         https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-2.0.15.dmg

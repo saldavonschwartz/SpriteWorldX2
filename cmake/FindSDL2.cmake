@@ -1,5 +1,3 @@
-set(SDL2_PATH "" CACHE STRING "SDL2 lib/include root path")
-
 if (SDL2_PATH)
     if(APPLE)
         set(SDL2_INCLUDE_DIR ${SDL2_PATH}/sdl2.framework/Headers) 
@@ -7,7 +5,8 @@ if (SDL2_PATH)
     endif()
 else()
     message("downloading SDL2...")
-    
+    set(SDL2_PATH "some path" CACHE STRING "SDL2 lib/include root path")
+
     if(APPLE)
         file(DOWNLOAD
         https://www.libsdl.org/release/SDL2-2.0.9.dmg

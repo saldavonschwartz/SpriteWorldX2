@@ -1,5 +1,3 @@
-set(SDL2_IMAGE_PATH "" CACHE STRING "SDL2_Image lib/include root path")
-
 if (SDL2_IMAGE_PATH)
     if(APPLE)
         set(SDL2_IMAGE_INCLUDE_DIR ${SDL2_IMAGE_PATH}/SDL2_image.framework/Headers) 
@@ -7,7 +5,8 @@ if (SDL2_IMAGE_PATH)
     endif()
 else()
     message("downloading SDL2_Image...")
-    
+    set(SDL2_IMAGE_PATH "some path" CACHE STRING "SDL2_Image lib/include root path")
+
     if(APPLE)
         file(DOWNLOAD
         https://www.libsdl.org/projects/SDL_image/release/SDL2_image-2.0.4.dmg
