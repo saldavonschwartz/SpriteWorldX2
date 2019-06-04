@@ -35,6 +35,31 @@ contrib/StaticText.h
 contrib/StaticText.c
 )
 
+source_group(TREE ${CMAKE_CURRENT_LIST_DIR} FILES
+sources/SpriteWorld.c
+sources/Sprite.c
+sources/SpriteCreation.c
+sources/SpriteLayer.c
+sources/SpriteFrame.c
+sources/SpriteWorldUtils.c
+sources/Scrolling.c
+sources/Tiling.c
+
+headers/SpriteWorld.h
+headers/Sprite.h
+headers/SpriteCreation.h
+headers/SpriteLayer.h
+headers/SpriteFrame.h
+headers/SpriteWorldUtils.h
+headers/Scrolling.h
+headers/Tiling.h
+headers/SWIncludes.h
+headers/SWCommonHeaders.h
+
+contrib/StaticText.h
+contrib/StaticText.c 
+)
+
 target_include_directories(${LIB_NAME} 
 PUBLIC
 ${PROJECT_SOURCE_DIR}/contrib 

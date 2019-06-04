@@ -26,7 +26,7 @@ else()
         file(COPY ${TEMP_FILES} DESTINATION ${CMAKE_BINARY_DIR}/ext/sdl2)
         
         execute_process(COMMAND 
-        hdiutil detach temp
+        hdiutil unmount temp -force
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/ext/)
 
         execute_process(COMMAND 
