@@ -1,11 +1,13 @@
 if (SDL2_IMAGE_PATH)
+    message("[USING SDL2_image AT: ${SDL2_IMAGE_PATH}]")
+    
     if(APPLE)
         set(SDL2_IMAGE_INCLUDE_DIR ${SDL2_IMAGE_PATH}/SDL2_image.framework/Headers) 
         set(SDL2_IMAGE_LIB ${SDL2_IMAGE_PATH}/SDL2_image.framework) 
     endif()
 else()
-    message("downloading SDL2_Image...")
-    set(SDL2_IMAGE_PATH "some path" CACHE STRING "SDL2_Image lib/include root path")
+    set(SDL2_IMAGE_PATH ${CMAKE_BINARY_DIR}/ext/sdl2_image CACHE STRING "SDL2_image lib/include root path")
+    message("[DOWNLOADING SDL2_image...]")
 
     if(APPLE)
         file(DOWNLOAD
@@ -32,7 +34,7 @@ else()
         rm temp.dmg
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/ext/)
         
-        set(SDL2_IMAGE_INCLUDE_DIR ${CMAKE_BINARY_DIR}/ext/sdl2_image/SDL2_image.framework/Headers) 
-        set(SDL2_IMAGE_LIB ${CMAKE_BINARY_DIR}/ext/sdl2_image/SDL2_image.framework) 
+        set(SDL2_IMAGE_INCLUDE_DIR ${SDL2_IMAGE_PATH}/SDL2_image.framework/Headers) 
+        set(SDL2_IMAGE_LIB ${SDL2_IMAGE_PATH}/SDL2_image.framework) 
     endif()
 endif()

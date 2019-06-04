@@ -1,11 +1,13 @@
 if (SDL2_TTF_PATH)
+    message("[USING SDL2_ttf AT: ${SDL2_TTF_PATH}]")
+    
     if(APPLE)
         set(SDL2_TTF_INCLUDE_DIR ${SDL2_TTF_PATH}/SDL2_ttf.framework/Headers) 
         set(SDL2_TTF_LIB ${SDL2_TTF_PATH}/SDL2_ttf.framework) 
     endif()
 else()
-    message("downloading SDL2_ttf...")
-    set(SDL2_TTF_PATH "some path" CACHE STRING "SDL2_ttf lib/include root path")
+    set(SDL2_TTF_PATH ${CMAKE_BINARY_DIR}/ext/sdl2_ttf CACHE STRING "SDL2_ttf lib/include root path")
+    message("[DOWNLOADING SDL2_ttf...]")
 
     if(APPLE)
         file(DOWNLOAD
@@ -32,7 +34,7 @@ else()
         rm temp.dmg
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/ext/)
         
-        set(SDL2_TTF_INCLUDE_DIR ${CMAKE_BINARY_DIR}/ext/sdl2_ttf/SDL2_ttf.framework/Headers) 
-        set(SDL2_TTF_LIB ${CMAKE_BINARY_DIR}/ext/sdl2_ttf/SDL2_ttf.framework) 
+        set(SDL2_TTF_INCLUDE_DIR ${SDL2_TTF_PATH}/SDL2_ttf.framework/Headers) 
+        set(SDL2_TTF_LIB ${SDL2_TTF_PATH}/SDL2_ttf.framework) 
     endif()
 endif()
