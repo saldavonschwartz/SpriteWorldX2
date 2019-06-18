@@ -1,5 +1,6 @@
 # SpriteWorldX2
 An SDL2 port of SpriteWorld / SpriteWorldX.
+Work in Progress.
 
 ### About:
 
@@ -12,15 +13,27 @@ SpriteWorldX2 is released under MIT license. It's ancestors were released under 
 * Particles are disabled.
 * The library largely depends on `SDL_Surface`, which back in SDL1 could be hardware-accelerated. SDL2 surfaces however are software-only, so the performance is not mind-blowing. To improve performance, eventually either the library should be based entirely on GL or a substantial part of the codebase whould be rewritten to at least use `SDL_Texture` most of the time.
 
-### Dependencies:
+### Dependencies (automatically fetched during cmake):
 
-* [SDL2](https://www.libsdl.org/download-2.0.php)
-* [SDL2_ttf](https://www.libsdl.org/projects/SDL_ttf/)
-* [SDL2_image](https://www.libsdl.org/projects/SDL_image/)
-* OpenGL
+* [SDL2<sup>1</sup>](https://www.libsdl.org/download-2.0.php)
+* [SDL2_ttf<sup>1</sup>](https://www.libsdl.org/projects/SDL_ttf/)
+* [SDL2_image<sup>1</sup>](https://www.libsdl.org/projects/SDL_image/)
+* Cocoa<sup>2</sup>
+
+<sup>1</sup>: automatically fetched by cmake process if path not specified.
+
+<sup>2</sup>: if building for OSX.
 
 ### How to Build:
-Compile all sources and link against the frameworks / libs mentioned above. (make / cmake might be coming).
+The project uses camke to build (Xcode only as of now -- more to come). So you can do:
+
+```
+git clone <repo url>
+cd <local-repo>
+mkdir build
+cd build
+cmake -G <generator> ..
+```
 
 **Acknowledgements:**
 
