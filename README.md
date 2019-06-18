@@ -6,7 +6,7 @@ Work in Progress.
 
 This is an SDL2-compatible port of [SpriteWorld](https://sourceforge.net/projects/spriteworld/) / [SpriteWorldX](https://sourceforge.net/projects/spriteworldx/). It was done as a somewhat quick stepping stone in getting a game based on the original SpriteWorld to run in current hardware and SDL2.
 
-SpriteWorldX2 is released under MIT license. It's ancestors were released under zlipb.
+SpriteWorldX2 is released under MIT license. It's ancestors were released under zlib.
 
 ### Known Limitations:
 
