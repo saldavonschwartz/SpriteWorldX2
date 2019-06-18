@@ -33,6 +33,7 @@ cd <local-repo>
 mkdir build
 cd build
 cmake -G <generator> ..
+<open Xcode project and build>
 ```
 
 **Acknowledgements:**
