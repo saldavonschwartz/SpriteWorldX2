@@ -62,8 +62,8 @@ AssertFailProcPtr	gSWAssertFailProc = &SWAssertFail; //moved from spriteworlduti
 #define CMASK_MODE 2
 
 void sdl2ctx_show() {
-  SDL_RenderClear(sdl2ctx.renderer);
   SDL_UpdateTexture(sdl2ctx.gpuBuffer, NULL, sdl2ctx.cpuBuffer->pixels, sdl2ctx.cpuBuffer->pitch);
+  SDL_RenderClear(sdl2ctx.renderer);
   SDL_RenderCopy(sdl2ctx.renderer, sdl2ctx.gpuBuffer, NULL, NULL);
   SDL_RenderPresent(sdl2ctx.renderer);
 }
