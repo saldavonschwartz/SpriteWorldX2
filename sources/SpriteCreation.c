@@ -39,7 +39,7 @@ SWError SWCreateSpriteFromSingleFileXY(
                                        long maxFrames )
 {
   SWError			err = kNoError;
-  SDL_Surface		*originalSurface, *surface;
+  SDL_Texture		*tx;
   SpritePtr		tempSpriteP = NULL;
   int 			widthStart = 0;
   int heightStart = 0;
@@ -47,29 +47,35 @@ SWError SWCreateSpriteFromSingleFileXY(
   int				frame;
   FramePtr 		newFrameP;
   
-  originalSurface = IMG_Load( fileName );
+  tx = IMG_LoadTexture(sdl2ctx.renderer, fileName );
   
-  if( ! originalSurface )
+  if( ! tx )
     err = kSDLCreateSurfaceFromFile;
+
+  // 0xfede: REMOVE | FIX
+//  SDL_BlendMode blendMode;
+//  SDL_GetTextureBlendMode(originalSurface, &blendMode);
+//
+//  if (blendMode == SDL_BLENDMODE_BLEND) {
+//    sdl_converttex
+//    surface = SDL_ConvertSurfaceFormat(originalSurface, SDL_PIXELFORMAT_ARGB8888, 0);
+//  }
+//  else {
+//    surface = SDL_ConvertSurfaceFormat(originalSurface, SDL_PIXELFORMAT_RGB888, 0);
+//  }
+//
+//  SDL_FreeSurface( originalSurface );
+//
+//  if ( ! surface ) err = kSDLSurfaceConversion;
+//
   
-  SDL_BlendMode blendMode;
-  SDL_GetSurfaceBlendMode(originalSurface, &blendMode);
-  
-  if (blendMode == SDL_BLENDMODE_BLEND) {
-    surface = SDL_ConvertSurfaceFormat(originalSurface, SDL_PIXELFORMAT_ARGB8888, 0);
-  }
-  else {
-    surface = SDL_ConvertSurfaceFormat(originalSurface, SDL_PIXELFORMAT_RGB888, 0);
-  }
-  
-  SDL_FreeSurface( originalSurface );
-  
-  if ( ! surface ) err = kSDLSurfaceConversion;
+  int w, h;
+  SDL_QueryTexture(tx, NULL, NULL, &w, &h);
   
   if( err == kNoError )
   {
     if( maxFrames == 0 )
-      maxFrames = (surface->w/frameWidth) * (surface->h/frameHeight);
+      maxFrames = (w/frameWidth) * (h/frameHeight);
     
     if ( hasOutsideBorder )
     {
@@ -88,7 +94,7 @@ SWError SWCreateSpriteFromSingleFileXY(
   if( err == kNoError )
   {
     tempSpriteP = *newSpriteP;
-    tempSpriteP->sharedSurface = surface;
+    tempSpriteP->sharedSurface = tx;
     
     frameRect.left = widthStart;
     frameRect.top = heightStart;
@@ -97,7 +103,7 @@ SWError SWCreateSpriteFromSingleFileXY(
     
     for (frame = 0; frame < maxFrames; frame++)
     {
-      err = SWCreateFrameFromSurfaceAndRect( &newFrameP, surface, &frameRect );
+      err = SWCreateFrameFromSurfaceAndRect( &newFrameP, tx, &frameRect );
       
       if (err == kNoError)
       {
@@ -106,14 +112,14 @@ SWError SWCreateSpriteFromSingleFileXY(
         {
           frameRect.left += frameWidth + borderWidth;
           frameRect.right = frameRect.left + frameWidth;
-          if ( frameRect.right > surface->w )
+          if ( frameRect.right > w )
           {
             frameRect.left = widthStart;
             frameRect.right = widthStart + frameWidth;
             
             frameRect.top += frameHeight + borderHeight;
             frameRect.bottom = frameRect.top + frameHeight;
-            if ( frameRect.bottom > surface->h )
+            if ( frameRect.bottom > h )
             {
               err = kOutOfRangeErr;
             }

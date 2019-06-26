@@ -45,8 +45,8 @@ typedef enum MaskType
 
 struct FrameRec
 {
-	SDL_Surface	*frameSurfaceP;			// pointer to screen optimized SDL_Surface for the frame
-	SDL_Surface	*originalSurfaceP;		// SDL_Surface before optimizations
+	SDL_Texture	*frameSurfaceP;			// pointer to screen optimized SDL_Texture for the frame
+	SDL_Texture	*originalSurfaceP;		// SDL_Texture before optimizations
 	int		isVideoSurface;			// is the frame's surface the SDL video surface (mapped directly to screen)
 	int		sharesSurface;			//should we free the surface when disposing the frame?
 	
@@ -69,8 +69,8 @@ struct FrameRec
 SWError SWCreateFrame (FramePtr* newFrameP);
 int SWDisposeFrame(FramePtr *oldFramePP);
 SWError SWCreateFrameFromSurfaceAndRect(FramePtr* newFrameP,
-	SDL_Surface *surface,SWRect* frameRect );
-SWError SWCreateFrameFromSurface (FramePtr* newFrameP, SDL_Surface *theSurface, int isVideoSurface );
+	SDL_Texture *surface,SWRect* frameRect );
+SWError SWCreateFrameFromSurface (FramePtr* newFrameP, SDL_Texture *theSurface, int isVideoSurface );
 SWError SWCreateBlankFrame (
 	FramePtr* newFrameP,
 	int w, int h, Uint8 depth, int createAlphaChannel );

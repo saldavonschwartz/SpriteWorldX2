@@ -27,7 +27,7 @@ SWError blitStringToFrame(
 	SDL_Color *textColor,
 	SDL_Color *backColor,
 	FramePtr frameP );
-void alphaBlendTextSurfaceToFrame( SDL_Surface *textSurface, SDL_Surface *frameSurface, SDL_Rect *destRect );
+void alphaBlendTextSurfaceToFrame( SDL_Texture *textSurface, SDL_Texture *frameSurface, SDL_Rect *destRect );
 void handleStaticText( SpritePtr stSP );
 
 ///--------------------------------------------------------------------------------------
@@ -168,7 +168,7 @@ SWError st_CreateStaticText(
 			&frameP,
 			SW_RECT_WIDTH( *bounds ),
 			SW_RECT_HEIGHT( *bounds ),
-			sdl2ctx.cpuBuffer->format->BitsPerPixel,
+			sdl2ctx.txInfo.bitsPerPx,
 			true );
 	}
 				
@@ -499,204 +499,211 @@ SWError blitStringToFrame(
 	SDL_Color *backColor,
 	FramePtr frameP )
 {
-	SWError err = kNoError;
-	char *lineStart, *lineEnd;
-	SDL_Surface *textSurface = NULL, *convertedTextSurface = NULL;
-	SDL_Rect destRect;
-	int lineWidth;
-	
-	if( lineSkipHeight == STLineHeight_Auto )
-		lineSkipHeight = TTF_FontLineSkip( font );
-	
-		// draw the background. Transparent for solid or blended,
-		// solid bkgnd color for smooth.
-	if( rendering == STRendering_Smooth )
-		SDL_FillRect( frameP->frameSurfaceP, NULL,
-			SDL_MapRGBA( frameP->frameSurfaceP->format, backColor->r, backColor->g, backColor->b, 0xFF ) );
-	else
-		SDL_FillRect( frameP->frameSurfaceP, NULL,
-			SDL_MapRGBA( frameP->frameSurfaceP->format, backColor->r, backColor->g, backColor->b, 0x00 ) );
-	
-	destRect.x = frameP->frameRect.left;
-	destRect.y = frameP->frameRect.top;
-	destRect.w = SW_RECT_WIDTH( frameP->frameRect );
-	
-	lineStart = string;
-	
-		// render each line, one at a time, and blit them over to our frame
-		// one after another. We have to start at the last line and work
-		// our way to the first, since some characters hang over to the
-		// line below, and we don't want those bits cut off.
-	while(
-		lineStart != NULL &&
-		*lineStart != '\0' &&
-		destRect.y < frameP->frameRect.bottom &&
-		err == kNoError )
-	{
-		if( *lineStart == '\n' )
-		{
-				// this is an empty line, so skip it.
-			lineStart++;
-			destRect.y += lineSkipHeight;
-			continue;
-		}
-		
-		lineEnd = strchr( lineStart, '\n' );
-		
-		if( lineEnd != NULL )
-		{
-				// we need to insert a null char temporarily at the end of
-				// this line, so that we can render just this text.
-			*lineEnd = '\0';
-		}
-		
-		TTF_SizeText( font, lineStart, &lineWidth, NULL );
-		
-		switch( rendering )
-		{
-			case STRendering_Solid:
-				textSurface = TTF_RenderText_Solid( font, lineStart, *textColor );
-				break;
-			case STRendering_Smooth:
-				textSurface = TTF_RenderText_Shaded( font, lineStart, *textColor, *backColor );
-				break;
-			case STRendering_Blended:
-				textSurface = TTF_RenderText_Blended( font, lineStart, *textColor );
-				break;
-		}
-				
-		if( textSurface == NULL )
-			err = kSTTextRenderingError;
-			
-		if( err == kNoError )
-		{
-				// put things back the way we found them, now that
-				// the text has been rendered
-			if( lineEnd != NULL )
-				*lineEnd = '\n';
-	
-				// convert the text surface to the display format, so we can
-				// blit it safely onto frameSurfaceP
-			convertedTextSurface = SDL_ConvertSurface(
-				textSurface,
-				frameP->frameSurfaceP->format,
-				SDL_SWSURFACE );
-			
-			if( convertedTextSurface == NULL )
-				err = kSTTextRenderingError;
-		}
-		
-		if( err == kNoError )
-		{
-			switch( align )
-			{
-				case STAlign_Left:
-					destRect.x = 0;
-					break;
-				case STAlign_Center:
-					destRect.x = (frameP->frameRect.right / 2) - (lineWidth / 2);
-					break;
-				case STAlign_Right:
-					destRect.x = frameP->frameRect.right - lineWidth;
-					break;
-			}
-					
-				// if we don't unset the SRCALPHA flag, then the dest
-				// surface alpha will remain untouched, and our text
-				// wont show up using a std blit. This is the way SDL
-				// is designed, although it is aknowledged to be
-				// counterintuitive in the docs.
-      
-      // original:
-      //      if( SDL_SetAlpha( convertedTextSurface, 0, 0xFF ) < 0 )
-      //        err = kSTTextRenderingError;
-
-      // 0xfede: or this?
-      //SDL_SetSurfaceAlphaMod(convertedTextSurface, SDL_ALPHA_OPAQUE);
-      
-      if(SDL_SetSurfaceBlendMode(convertedTextSurface, SDL_BLENDMODE_NONE) < 0 ) {
-        err = kSTTextRenderingError;
-      }
-      
-			if( SDL_SetColorKey( convertedTextSurface, SDL_TRUE, SDL_MapRGBA( convertedTextSurface->format, 0xFF, 0xFF, 0xFF, 0x00 ) ) < 0 ) {
-        err = kSTTextRenderingError;
-      }
-		}
-		
-			// we use our own function for alpha bending since for
-			// a RGBA to RGBA blit, SDL either leaves the dest alpha
-			// untouched (if SRCALPHA is set), or replaces it completely
-			// with the source alpha (if SRCALPHA is not set). In the first
-			// option the text doesnt show up at all, and in the second hanging
-			// characters such as 'g' and 'j' have their bottoms cut off
-			// when the next line is blit. So we do our own blit pixel-by-pixel,
-			// 'alpha-bending' (taking the max of src/dest alphas) as we go.
-			// FWIK, this is rediculously slow on HW surfaces, but until
-			// somebody comesup with a better solution...
-		if( err == kNoError )
-		{
-			if( rendering == STRendering_Blended || rendering == STRendering_Solid )
-				alphaBlendTextSurfaceToFrame( convertedTextSurface, frameP->frameSurfaceP, &destRect );
-			else
-			{
-				if( err == kNoError )
-					if( SDL_BlitSurface( convertedTextSurface, NULL, frameP->frameSurfaceP, &destRect ) < 0 )
-						err = kSTTextRenderingError;
-			}
-		}
-		
-		if( err == kNoError )
-		{	
-			if( lineEnd == NULL )
-				lineStart = NULL;
-			else
-				lineStart = lineEnd + 1;
-			
-			destRect.y += lineSkipHeight;
-		}
-
-		if( textSurface ) SDL_FreeSurface( textSurface );
-		if( convertedTextSurface ) SDL_FreeSurface( convertedTextSurface );
-	}
-	
+  SWError err = kNoError;
+  
+  // 0xfede: fix
+//  char *lineStart, *lineEnd;
+//  SDL_Texture *textSurface = NULL, *convertedTextSurface = NULL;
+//  SDL_Rect destRect;
+//  int lineWidth;
+//
+//  if( lineSkipHeight == STLineHeight_Auto )
+//    lineSkipHeight = TTF_FontLineSkip( font );
+//
+//    // draw the background. Transparent for solid or blended,
+//    // solid bkgnd color for smooth.
+//
+//
+//  if( rendering == STRendering_Smooth )
+//    SDL_FillRect( frameP->frameSurfaceP, NULL,
+//      SDL_MapRGBA( frameP->frameSurfaceP->format, backColor->r, backColor->g, backColor->b, 0xFF ) );
+//  else
+//    SDL_FillRect( frameP->frameSurfaceP, NULL,
+//      SDL_MapRGBA( frameP->frameSurfaceP->format, backColor->r, backColor->g, backColor->b, 0x00 ) );
+//
+//  destRect.x = frameP->frameRect.left;
+//  destRect.y = frameP->frameRect.top;
+//  destRect.w = SW_RECT_WIDTH( frameP->frameRect );
+//
+//  lineStart = string;
+//
+//    // render each line, one at a time, and blit them over to our frame
+//    // one after another. We have to start at the last line and work
+//    // our way to the first, since some characters hang over to the
+//    // line below, and we don't want those bits cut off.
+//  while(
+//    lineStart != NULL &&
+//    *lineStart != '\0' &&
+//    destRect.y < frameP->frameRect.bottom &&
+//    err == kNoError )
+//  {
+//    if( *lineStart == '\n' )
+//    {
+//        // this is an empty line, so skip it.
+//      lineStart++;
+//      destRect.y += lineSkipHeight;
+//      continue;
+//    }
+//
+//    lineEnd = strchr( lineStart, '\n' );
+//
+//    if( lineEnd != NULL )
+//    {
+//        // we need to insert a null char temporarily at the end of
+//        // this line, so that we can render just this text.
+//      *lineEnd = '\0';
+//    }
+//
+//    TTF_SizeText( font, lineStart, &lineWidth, NULL );
+//
+//    switch( rendering )
+//    {
+//      case STRendering_Solid:
+//        textSurface = TTF_RenderText_Solid( font, lineStart, *textColor );
+//        break;
+//      case STRendering_Smooth:
+//        textSurface = TTF_RenderText_Shaded( font, lineStart, *textColor, *backColor );
+//        break;
+//      case STRendering_Blended:
+//        textSurface = TTF_RenderText_Blended( font, lineStart, *textColor );
+//        break;
+//    }
+//
+//    if( textSurface == NULL )
+//      err = kSTTextRenderingError;
+//
+//    if( err == kNoError )
+//    {
+//        // put things back the way we found them, now that
+//        // the text has been rendered
+//      if( lineEnd != NULL )
+//        *lineEnd = '\n';
+//
+//        // convert the text surface to the display format, so we can
+//        // blit it safely onto frameSurfaceP
+//      convertedTextSurface = SDL_ConvertSurface(
+//        textSurface,
+//        frameP->frameSurfaceP->format,
+//        SDL_SWSURFACE );
+//
+//      if( convertedTextSurface == NULL )
+//        err = kSTTextRenderingError;
+//    }
+//
+//    if( err == kNoError )
+//    {
+//      switch( align )
+//      {
+//        case STAlign_Left:
+//          destRect.x = 0;
+//          break;
+//        case STAlign_Center:
+//          destRect.x = (frameP->frameRect.right / 2) - (lineWidth / 2);
+//          break;
+//        case STAlign_Right:
+//          destRect.x = frameP->frameRect.right - lineWidth;
+//          break;
+//      }
+//
+//        // if we don't unset the SRCALPHA flag, then the dest
+//        // surface alpha will remain untouched, and our text
+//        // wont show up using a std blit. This is the way SDL
+//        // is designed, although it is aknowledged to be
+//        // counterintuitive in the docs.
+//
+//      // original:
+//      //      if( SDL_SetAlpha( convertedTextSurface, 0, 0xFF ) < 0 )
+//      //        err = kSTTextRenderingError;
+//
+//      // 0xfede: or this?
+//      //SDL_SetSurfaceAlphaMod(convertedTextSurface, SDL_ALPHA_OPAQUE);
+//
+//      if(SDL_SetSurfaceBlendMode(convertedTextSurface, SDL_BLENDMODE_NONE) < 0 ) {
+//        err = kSTTextRenderingError;
+//      }
+//
+//      if( SDL_SetColorKey( convertedTextSurface, SDL_TRUE, SDL_MapRGBA( convertedTextSurface->format, 0xFF, 0xFF, 0xFF, 0x00 ) ) < 0 ) {
+//        err = kSTTextRenderingError;
+//      }
+//    }
+//
+//      // we use our own function for alpha bending since for
+//      // a RGBA to RGBA blit, SDL either leaves the dest alpha
+//      // untouched (if SRCALPHA is set), or replaces it completely
+//      // with the source alpha (if SRCALPHA is not set). In the first
+//      // option the text doesnt show up at all, and in the second hanging
+//      // characters such as 'g' and 'j' have their bottoms cut off
+//      // when the next line is blit. So we do our own blit pixel-by-pixel,
+//      // 'alpha-bending' (taking the max of src/dest alphas) as we go.
+//      // FWIK, this is rediculously slow on HW surfaces, but until
+//      // somebody comesup with a better solution...
+//    if( err == kNoError )
+//    {
+//      if( rendering == STRendering_Blended || rendering == STRendering_Solid )
+//        alphaBlendTextSurfaceToFrame( convertedTextSurface, frameP->frameSurfaceP, &destRect );
+//      else
+//      {
+//        if( err == kNoError )
+//          if( SDL_BlitSurface( convertedTextSurface, NULL, frameP->frameSurfaceP, &destRect ) < 0 )
+//            err = kSTTextRenderingError;
+//      }
+//    }
+//
+//    if( err == kNoError )
+//    {
+//      if( lineEnd == NULL )
+//        lineStart = NULL;
+//      else
+//        lineStart = lineEnd + 1;
+//
+//      destRect.y += lineSkipHeight;
+//    }
+//
+//    if( textSurface ) SDL_FreeSurface( textSurface );
+//    if( convertedTextSurface ) SDL_FreeSurface( convertedTextSurface );
+//  }
+//
 	return err;
 }
 
-void alphaBlendTextSurfaceToFrame( SDL_Surface *textSurface, SDL_Surface *frameSurface, SDL_Rect *destRect )
+void alphaBlendTextSurfaceToFrame( SDL_Texture *textSurface, SDL_Texture *frameSurface, SDL_Rect *destRect )
 {
-	int row, col, maxRow, maxCol;
-	Uint32 *src;
-	Uint32 *dst;
-	
-	// assumes both surfaces are same format.
-	
-	SDL_LockSurface( textSurface );
-	SDL_LockSurface( frameSurface );
-	
-	maxRow = frameSurface->h - destRect->y - 1;
-	maxCol = frameSurface->w - destRect->x - 1;
-	
-	for( row=0; row<textSurface->h; row++ )
-	{
-		if( row > maxRow ) break;
-		
-		src = &((Uint32*)textSurface->pixels)[ row * textSurface->w ];
-		dst = &((Uint32*)frameSurface->pixels)[ ( destRect->y + row ) * frameSurface->w + destRect->x ];
-		
-		for( col=0; col<textSurface->w; col++ )
-		{
-			if( col > maxCol ) break;
-			
-			if( (Uint32)(*src & textSurface->format->Amask) > (Uint32)(*dst & frameSurface->format->Amask) )
-				*dst = *src;
-			
-			src++;
-			dst++;
-		}
-	}
-	
-	SDL_UnlockSurface( textSurface );
-	SDL_UnlockSurface( frameSurface );
+  // 0xfede: FIX
+//  int row, col, maxRow, maxCol;
+//  Uint32 *src;
+//  Uint32 *dst;
+//
+//  // assumes both surfaces are same format.
+//  SDL_RenderCopy(<#SDL_Renderer *renderer#>, <#SDL_Texture *texture#>, <#const SDL_Rect *srcrect#>, <#const SDL_Rect *dstrect#>)
+//
+//
+//  SDL_LockSurface( textSurface );
+//  SDL_LockSurface( frameSurface );
+//
+//  maxRow = frameSurface->h - destRect->y - 1;
+//  maxCol = frameSurface->w - destRect->x - 1;
+//
+//  for( row=0; row<textSurface->h; row++ )
+//  {
+//    if( row > maxRow ) break;
+//
+//    src = &((Uint32*)textSurface->pixels)[ row * textSurface->w ];
+//    dst = &((Uint32*)frameSurface->pixels)[ ( destRect->y + row ) * frameSurface->w + destRect->x ];
+//
+//    for( col=0; col<textSurface->w; col++ )
+//    {
+//      if( col > maxCol ) break;
+//
+//      if( (Uint32)(*src & textSurface->format->Amask) > (Uint32)(*dst & frameSurface->format->Amask) )
+//        *dst = *src;
+//
+//      src++;
+//      dst++;
+//    }
+//  }
+//
+//  SDL_UnlockSurface( textSurface );
+//  SDL_UnlockSurface( frameSurface );
 }
 
 #pragma mark -

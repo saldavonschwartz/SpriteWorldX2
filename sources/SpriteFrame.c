@@ -56,7 +56,7 @@ SWError SWCreateFrame (
 
 SWError SWCreateFrameFromSurface (
                                   FramePtr* newFrameP,
-                                  SDL_Surface *surfaceP,
+                                  SDL_Texture *surfaceP,
                                   int isVideoSurface )
 {
   SWError err = kNoError;
@@ -94,7 +94,7 @@ SWError SWCreateFrameFromSurface (
 
 SWError SWCreateFrameFromSurfaceAndRect(
                                         FramePtr* newFrameP,
-                                        SDL_Surface *surfaceP,
+                                        SDL_Texture *surfaceP,
                                         SWRect* frameRectP )
 {
   SWError		err = kNoError;
@@ -143,7 +143,7 @@ SWError SWCreateBlankFrame (
 {
   SWError err = kNoError;
   FramePtr tempFrameP = 0;
-  SDL_Surface *tempSurfaceP;
+  SDL_Texture *tempSurfaceP;
   uint32_t* cmask = &sdl2ctx.cmask[0];
   err = SWCreateFrame( &tempFrameP );
   
@@ -152,7 +152,8 @@ SWError SWCreateBlankFrame (
     uint32_t a = createAlphaChannel ? cmask[3] : 0;
     /* Create a 32-bit surface with the bytes of each pixel in R,G,B,A order,
      as expected by OpenGL for textures */
-    tempSurfaceP = SDL_CreateRGBSurface(0, w, h, depth, cmask[0], cmask[1], cmask[2], a);
+    tempSurfaceP = SDL_CreateTexture(sdl2ctx.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, w, h);
+//    tempSurfaceP = SDL_CreateRGBSurface(0, w, h, depth, cmask[0], cmask[1], cmask[2], a);
     if (!tempSurfaceP)
       err = kSDLCreateSurface;
   }
@@ -172,7 +173,7 @@ SWError SWCreateBlankFrame (
   {
     if ( tempSurfaceP )
     {
-      SDL_FreeSurface( tempSurfaceP );
+      SDL_DestroyTexture(tempSurfaceP);
     }
     if ( tempFrameP )
     {
@@ -193,13 +194,14 @@ SWError SWCreateFrameFromFile (
 {
   SWError err = kNoError;
   FramePtr tempFrameP = 0;
-  SDL_Surface *tempSurfaceP;
+  SDL_Texture *tempSurfaceP;
   
   err = SWCreateFrame( &tempFrameP );
   
   if (err == kNoError)
   {
-    tempSurfaceP = IMG_Load(filename);
+    
+    tempSurfaceP = IMG_LoadTexture(sdl2ctx.renderer, filename);
     
     if (!tempSurfaceP) {
       fprintf(stderr, "SDL error: %s\n", SDL_GetError());
@@ -224,7 +226,7 @@ SWError SWCreateFrameFromFile (
   {
     if ( tempSurfaceP )
     {
-      SDL_FreeSurface( tempSurfaceP );
+      SDL_DestroyTexture( tempSurfaceP );
     }
     if ( tempFrameP )
     {
@@ -265,14 +267,14 @@ int SWDisposeFrame(
         if (oldFrameP->frameSurfaceP)
         {
           if (!oldFrameP->sharesSurface)
-            SDL_FreeSurface(oldFrameP->frameSurfaceP);
+            SDL_DestroyTexture(oldFrameP->frameSurfaceP);
           oldFrameP->frameSurfaceP = 0;
         }
         
         if (oldFrameP->originalSurfaceP)
         {
           if (!oldFrameP->sharesSurface)
-            SDL_FreeSurface(oldFrameP->originalSurfaceP);
+            SDL_DestroyTexture(oldFrameP->originalSurfaceP);
           oldFrameP->originalSurfaceP = 0;
         }
       }
@@ -328,7 +330,7 @@ void SWUnlockFrame(
  int copyMasks)
  {
  SWError 		err = kNoError;
- SDL_Surface		*tempSurfaceP = 0;
+ SDL_Texture		*tempSurfaceP = 0;
  FramePtr 		tempFrameP;
  SWRect 			frameRect;
  
@@ -404,7 +406,7 @@ SWError SWUpdateFrame (
                        FramePtr srcFrameP)
 {
   SWError err = kNoError;
-  SDL_Surface *tempSurfaceP = 0;
+  SDL_Texture *tempSurfaceP = 0;
   SDL_BlendMode blendMode;
   
   SW_ASSERT(srcFrameP != 0);
@@ -422,14 +424,20 @@ SWError SWUpdateFrame (
     //      SDL_GetVideoSurface()->flags |= SDL_SWSURFACE;
     //    }
     
-    SDL_GetSurfaceBlendMode(srcFrameP->originalSurfaceP, &blendMode);
+    SDL_GetTextureBlendMode(srcFrameP->originalSurfaceP, &blendMode);
+    int w, h;
+    SDL_QueryTexture(srcFrameP->originalSurfaceP, NULL, NULL, &w, &h);
     
     if (blendMode == SDL_BLENDMODE_BLEND) {
-      tempSurfaceP = SDL_ConvertSurfaceFormat(srcFrameP->originalSurfaceP, SDL_PIXELFORMAT_ARGB8888, 0);
+      tempSurfaceP = SDL_CreateTexture(sdl2ctx.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, w, h);
     }
     else {
-      tempSurfaceP = SDL_ConvertSurfaceFormat(srcFrameP->originalSurfaceP, SDL_PIXELFORMAT_RGB888, 0);
+      tempSurfaceP = SDL_CreateTexture(sdl2ctx.renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET, w, h);
     }
+    
+    SDL_SetRenderTarget(sdl2ctx.renderer, tempSurfaceP);
+    SDL_RenderCopy(sdl2ctx.renderer, srcFrameP->originalSurfaceP, NULL, NULL);
+    SDL_SetRenderTarget(sdl2ctx.renderer, NULL);
     
     //    if( saveHardware )
     //    {
@@ -446,7 +454,7 @@ SWError SWUpdateFrame (
     {
       if( srcFrameP->frameSurfaceP )
       {
-        SDL_FreeSurface(srcFrameP->frameSurfaceP);
+        SDL_DestroyTexture(srcFrameP->frameSurfaceP);
       }
       
       srcFrameP->frameSurfaceP = tempSurfaceP;
@@ -458,11 +466,13 @@ SWError SWUpdateFrame (
     // Update the frame rect if the frame surface isn't shared (it isn't a portion of a surface)
     if ( !srcFrameP->sharesSurface )
     {
-      SW_SET_RECT( srcFrameP->frameRect, 0, 0, srcFrameP->frameSurfaceP->w, srcFrameP->frameSurfaceP->h );
+      int w_, h_;
+      SDL_QueryTexture(srcFrameP->frameSurfaceP, NULL, NULL, &w_, &h_);
+      SW_SET_RECT( srcFrameP->frameRect, 0, 0, w_, h_);
     }
     
     // Set mask type
-    SDL_GetSurfaceBlendMode(srcFrameP->originalSurfaceP, &blendMode);
+    SDL_GetTextureBlendMode(srcFrameP->originalSurfaceP, &blendMode);
     
     if (blendMode != SDL_BLENDMODE_BLEND) {
       srcFrameP->maskType = kAlphaChannelMask;
@@ -474,7 +484,7 @@ SWError SWUpdateFrame (
   {
     if ( tempSurfaceP )
     {
-      SDL_FreeSurface( tempSurfaceP );
+      SDL_DestroyTexture( tempSurfaceP );
     }
   }
   

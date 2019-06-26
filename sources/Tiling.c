@@ -720,7 +720,7 @@ SWError SWLoadTilesFromSingleFileXY(
 	short		startTileID )
 {
 	SWError			err = kNoError;
-	SDL_Surface		*surface;
+	SDL_Texture		*surface;
 	int 			widthStart, heightStart;
 	SWRect			frameRect;
 	int			frame;
@@ -731,14 +731,19 @@ SWError SWLoadTilesFromSingleFileXY(
         SW_ASSERT( numTiles > 0 );
         
         // Load the image
-	surface = IMG_Load( fileName );
-	if( !surface )
-        {
-            err = kSDLCreateSurfaceFromFile;
+  surface = IMG_LoadTexture(sdl2ctx.renderer, fileName );
+  int w, h;
+  
+	if( !surface ) {
+    err = kSDLCreateSurfaceFromFile;
 	}
-        
+  else {
+    SDL_QueryTexture(surface, NULL, NULL, &w, &h);
+  }
+  
 	if( err == kNoError )
 	{
+    
 		if ( hasOutsideBorder )
 		{
 			widthStart = borderWidth / 2;
@@ -785,14 +790,14 @@ SWError SWLoadTilesFromSingleFileXY(
 				{
 					frameRect.left += frameWidth + borderWidth;
 					frameRect.right = frameRect.left + frameWidth;
-					if ( frameRect.right > surface->w )
+					if ( frameRect.right > w )
 					{
 						frameRect.left = widthStart;
 						frameRect.right = widthStart + frameWidth;
 
 						frameRect.top += frameHeight + borderHeight;
 						frameRect.bottom = frameRect.top + frameHeight;
-						if ( frameRect.bottom > surface->h )
+						if ( frameRect.bottom > h )
 						{
 							err = kOutOfRangeErr;
 						}
@@ -1175,8 +1180,7 @@ void SWStdCustomTileDrawProc(
 	else
             (*spriteWorldP->offscreenDrawProc)(srcFrameP, dstFrameP, srcRectP, dstRectP);
                 
-        /*
-	SWError err = kNoError;
+ SWError err = kNoError;
 	SDL_Rect srcSDLRect;
 	SDL_Rect dstSDLRect;
 
@@ -1184,15 +1188,12 @@ void SWStdCustomTileDrawProc(
 
 	SW_CONVERT_SW_TO_SDL_RECT( (*srcRectP), srcSDLRect );
 	SW_CONVERT_SW_TO_SDL_RECT( (*dstRectP), dstSDLRect );
-                
-	err = SDL_BlitSurface(
-		srcFrameP->frameSurfaceP,
-		&srcSDLRect,
-		dstFrameP->frameSurfaceP,
-		&dstSDLRect );
-        
+  
+  SDL_SetRenderTarget(sdl2ctx.renderer, dstFrameP->frameSurfaceP);
+  SDL_RenderCopy(sdl2ctx.renderer, srcFrameP->frameSurfaceP, &srcSDLRect, &dstSDLRect);
+  SDL_SetRenderTarget(sdl2ctx.renderer, NULL);
 	SWSetStickyIfError( err );
-        */
+  
 }
 
 

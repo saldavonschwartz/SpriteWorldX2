@@ -62,7 +62,6 @@ AssertFailProcPtr	gSWAssertFailProc = &SWAssertFail; //moved from spriteworlduti
 #define CMASK_MODE 2
 
 void sdl2ctx_show() {
-  SDL_UpdateTexture(sdl2ctx.gpuBuffer, NULL, sdl2ctx.cpuBuffer->pixels, sdl2ctx.cpuBuffer->pitch);
   SDL_RenderClear(sdl2ctx.renderer);
   SDL_RenderCopy(sdl2ctx.renderer, sdl2ctx.gpuBuffer, NULL, NULL);
   SDL_RenderPresent(sdl2ctx.renderer);
@@ -73,7 +72,10 @@ Uint32 sdl2ctx_wflags() {
 }
 
 SDL2Context sdl2ctx = {
-  NULL, NULL, NULL, NULL, SDL_WINDOW_FULLSCREEN_DESKTOP, NULL, 0, 0,
+  NULL, NULL, NULL, {
+    0, 0, 0, 0
+  },
+  SDL_WINDOW_FULLSCREEN_DESKTOP, NULL, 0, 0,
   {
 #if (CMASK_MODE == 1)
     0xFF000000,
@@ -163,7 +165,7 @@ SWError SWCreateSpriteWorld(
     return err;
   }
   
-  sdl2ctx.renderer = SDL_CreateRenderer(sdl2ctx.window, -1, SDL_RENDERER_ACCELERATED);
+  sdl2ctx.renderer = SDL_CreateRenderer(sdl2ctx.window, -1, SDL_RENDERER_ACCELERATED | SDL_TEXTUREACCESS_TARGET);
   if (!sdl2ctx.renderer) {
     LOG_SDL_ERROR();
     err = kSDLSetVideoMode;
@@ -176,10 +178,14 @@ SWError SWCreateSpriteWorld(
   
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_RenderSetLogicalSize(sdl2ctx.renderer, lw, lh);
+  sdl2ctx.txInfo.w = lw;
+  sdl2ctx.txInfo.h = lh;
+  sdl2ctx.txInfo.format = SDL_PIXELFORMAT_ARGB8888;
+  sdl2ctx.txInfo.access = SDL_TEXTUREACCESS_STATIC;
+  sdl2ctx.txInfo.bitsPerPx = 32;
+  sdl2ctx.gpuBuffer = SDL_CreateTexture(sdl2ctx.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, lw, lh);
   
-  sdl2ctx.cpuBuffer = SDL_CreateRGBSurface(0, lw, lh, depth, sdl2ctx.cmask[0], sdl2ctx.cmask[1], sdl2ctx.cmask[2], sdl2ctx.cmask[3]);
-  sdl2ctx.gpuBuffer = SDL_CreateTexture(sdl2ctx.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, lw, lh);
-  err = SWCreateSpriteWorldFromVideoSurface(spriteWorldPP, sdl2ctx.cpuBuffer, &worldRect, &worldRect, 0 );
+  err = SWCreateSpriteWorldFromVideoSurface(spriteWorldPP, sdl2ctx.gpuBuffer, &worldRect, &worldRect, 0 );
   
 	SWSetStickyIfError(err);
 	return err;
@@ -192,7 +198,7 @@ SWError SWCreateSpriteWorld(
 
 SWError SWCreateSpriteWorldFromVideoSurface(
 	SpriteWorldPtr		*spriteWorldPP,
-	SDL_Surface			*videoSurfaceP,
+	SDL_Texture			*videoSurfaceP,
 	SWRect				*worldRectP,
 	SWRect				*backRectP,
 	int					maxDepth )
@@ -208,19 +214,19 @@ SWError SWCreateSpriteWorldFromVideoSurface(
 	
 	*spriteWorldPP = tempSpriteWorldP = 0;
 	screenFrameP = backFrameP = workFrameP = 0;
-
+  
 	if (worldRectP == NULL )
 	{
-		SW_SET_RECT( windRect, 0, 0, videoSurfaceP->w, videoSurfaceP->h );
+		SW_SET_RECT( windRect, 0, 0, sdl2ctx.txInfo.w, sdl2ctx.txInfo.h );
 	}
 	else
 	{
 		windRect = *worldRectP;
 	}
 	
-	if ( maxDepth == 0 || videoSurfaceP->format->BitsPerPixel <= maxDepth )
+	if ( maxDepth == 0 || sdl2ctx.txInfo.bitsPerPx <= maxDepth )
 	{
-		depth = videoSurfaceP->format->BitsPerPixel;
+		depth = sdl2ctx.txInfo.bitsPerPx;
 	}
 	else
 	{
@@ -908,13 +914,11 @@ void SWStdOffscreenDrawProc(
 
 	SW_CONVERT_SW_TO_SDL_RECT( srcFinalRect, srcSDLRect );
 	SW_CONVERT_SW_TO_SDL_RECT( dstFinalRect, dstSDLRect );
-        
-	err = SDL_BlitSurface(
-		srcFrameP->frameSurfaceP,
-		&srcSDLRect,
-		dstFrameP->frameSurfaceP,
-		&dstSDLRect );
-	
+  
+  SDL_SetRenderTarget(sdl2ctx.renderer, dstFrameP->frameSurfaceP);
+  err = SDL_RenderCopy(sdl2ctx.renderer, srcFrameP->frameSurfaceP, &srcSDLRect, &dstSDLRect);
+  SDL_SetRenderTarget(sdl2ctx.renderer, NULL);
+  
 	SWSetStickyIfError( err );
 }
 
@@ -967,17 +971,19 @@ void SWStdScreenDrawProc(
 
 	SW_CONVERT_SW_TO_SDL_RECT( srcFinalRect, srcSDLRect );
 	SW_CONVERT_SW_TO_SDL_RECT( dstFinalRect, dstSDLRect );
-	
-	err = SDL_BlitSurface(
-		srcFrameP->frameSurfaceP,
-		&srcSDLRect,
-		dstFrameP->frameSurfaceP,
-		&dstSDLRect );
-	
+  
+  SDL_SetRenderTarget(sdl2ctx.renderer, dstFrameP->frameSurfaceP);
+  err = SDL_RenderCopy(sdl2ctx.renderer, srcFrameP->frameSurfaceP, &srcSDLRect, &dstSDLRect);
+  
+  SDL_SetRenderTarget(sdl2ctx.renderer, NULL);
+  SDL_RenderClear(sdl2ctx.renderer);
+  err = SDL_RenderCopy(sdl2ctx.renderer, dstFrameP->frameSurfaceP, NULL, NULL);
+  SDL_RenderPresent(sdl2ctx.renderer);
+  
 	SWSetStickyIfError( err );
   
   // 0xfede:
-  sdl2ctx.show();
+//  sdl2ctx.show();
 //  SDL_UpdateRect( dstFrameP->frameSurfaceP, dstSDLRect.x, dstSDLRect.y, dstSDLRect.w, dstSDLRect.h );
 }
 

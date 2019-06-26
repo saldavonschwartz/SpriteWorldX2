@@ -161,7 +161,7 @@ struct SpriteRec
 	AdvanceType		frameAdvanceMode;	// mode of automatic frame advancement
 	RemovalType		spriteRemoval;		// whether to remove sprite, and if so, how.
 	
-	SDL_Surface		*sharedSurface;		// if common surface is used for frames, here it is
+	SDL_Texture		*sharedSurface;		// if common surface is used for frames, here it is
 	DrawDataPtr 	drawData;			// has various drawing style attributes
 	
     long            userData;
