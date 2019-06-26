@@ -61,18 +61,12 @@ AssertFailProcPtr	gSWAssertFailProc = &SWAssertFail; //moved from spriteworlduti
  // 1 = RGBA, 2 = ARGB
 #define CMASK_MODE 2
 
-void sdl2ctx_show() {
-  SDL_RenderClear(sdl2ctx.renderer);
-  SDL_RenderCopy(sdl2ctx.renderer, sdl2ctx.gpuBuffer, NULL, NULL);
-  SDL_RenderPresent(sdl2ctx.renderer);
-}
-
 Uint32 sdl2ctx_wflags() {
   return SDL_GetWindowFlags(sdl2ctx.window);
 }
 
 SDL2Context sdl2ctx = {
-  NULL, NULL, NULL, {
+  NULL, NULL, {
     0, 0, 0, 0
   },
   SDL_WINDOW_FULLSCREEN_DESKTOP, NULL, 0, 0,
@@ -90,7 +84,7 @@ SDL2Context sdl2ctx = {
 #endif
   },
   
-  &sdl2ctx_show, &sdl2ctx_wflags
+  &sdl2ctx_wflags
 };
 
 
@@ -183,9 +177,9 @@ SWError SWCreateSpriteWorld(
   sdl2ctx.txInfo.format = SDL_PIXELFORMAT_ARGB8888;
   sdl2ctx.txInfo.access = SDL_TEXTUREACCESS_STATIC;
   sdl2ctx.txInfo.bitsPerPx = 32;
-  sdl2ctx.gpuBuffer = SDL_CreateTexture(sdl2ctx.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, lw, lh);
+  SDL_Texture* tx = SDL_CreateTexture(sdl2ctx.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, lw, lh);
   
-  err = SWCreateSpriteWorldFromVideoSurface(spriteWorldPP, sdl2ctx.gpuBuffer, &worldRect, &worldRect, 0 );
+  err = SWCreateSpriteWorldFromVideoSurface(spriteWorldPP, tx, &worldRect, &worldRect, 0 );
   
 	SWSetStickyIfError(err);
 	return err;
@@ -972,12 +966,8 @@ void SWStdScreenDrawProc(
 	SW_CONVERT_SW_TO_SDL_RECT( srcFinalRect, srcSDLRect );
 	SW_CONVERT_SW_TO_SDL_RECT( dstFinalRect, dstSDLRect );
   
-  SDL_SetRenderTarget(sdl2ctx.renderer, dstFrameP->frameSurfaceP);
-  err = SDL_RenderCopy(sdl2ctx.renderer, srcFrameP->frameSurfaceP, &srcSDLRect, &dstSDLRect);
-  
-  SDL_SetRenderTarget(sdl2ctx.renderer, NULL);
-  SDL_RenderClear(sdl2ctx.renderer);
-  err = SDL_RenderCopy(sdl2ctx.renderer, dstFrameP->frameSurfaceP, NULL, NULL);
+//  SDL_RenderClear(sdl2ctx.renderer);
+  err = SDL_RenderCopy(sdl2ctx.renderer, srcFrameP->frameSurfaceP, NULL, NULL);
   SDL_RenderPresent(sdl2ctx.renderer);
   
 	SWSetStickyIfError( err );
@@ -1150,23 +1140,8 @@ void SWUpdateSpriteWorld(
 	SWDisposeUpdateRectList( &spriteWorldP->headUpdateRectP );
       
 	spriteWorldP->numTilesChanged = 0;
-        
-	if( spriteWorldP->useHWDoubleBuf )
-	{
-    // 0xfede:
-    sdl2ctx.show();
-    //    SDL_Flip( SDL_GetVideoSurface() );
-		
-
-		(*spriteWorldP->screenDrawProc)(spriteWorldP->workFrameP,
-										spriteWorldP->screenFrameP,
-										&spriteWorldP->visScrollRect,
-										&spriteWorldP->screenFrameP->frameRect);
-		
-		SWDisposeUpdateRectList( &spriteWorldP->secondBufHeadUpdateRectP );
-	}
-        
-		// This is so time-based animations work correctly.
+  
+  	// This is so time-based animations work correctly.
 	SWResetMovementTimer(spriteWorldP);
   gSWCurrentSpriteWorld = NULL;
 }
@@ -1784,17 +1759,7 @@ void SWAnimateSpriteWorld(
 	{
 		SWRemoveSpriteLayer(spriteWorldP, spriteWorldP->deadSpriteLayerP);
 	}
-	
-	if( spriteWorldP->useHWDoubleBuf )
-	{
-    // 0xfede:
-    sdl2ctx.show();
-//    SDL_Flip( SDL_GetVideoSurface() );
-		
-		spriteWorldP->headUpdateRectP = spriteWorldP->secondBufHeadUpdateRectP;
-		spriteWorldP->secondBufHeadUpdateRectP = NULL;
-	}
-	
+  
 	gSWCurrentSpriteWorld = NULL;
 }
 

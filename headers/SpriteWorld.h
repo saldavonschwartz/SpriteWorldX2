@@ -183,7 +183,6 @@ struct SpriteWorldRec
   
   typedef struct {
     SDL_Renderer* renderer;
-    SDL_Texture* gpuBuffer;
     SDL_Window* window;
     struct {
       int w; int h; int format; int access; int bitsPerPx;
@@ -193,7 +192,6 @@ struct SpriteWorldRec
     int dmodeIdx;
     int dmodeCount;
     uint32_t cmask[4];
-    void (*show)(void);
     Uint32 (*wflags)(void);
   } SDL2Context;
   
