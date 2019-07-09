@@ -22,7 +22,7 @@ else()
         mkdir sdl2
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/ext/)
 
-        file(GLOB TEMP_FILES ${CMAKE_BINARY_DIR}/ext/temp/*)
+        file(GLOB TEMP_FILES /Volumes/SDL2/*)
         file(COPY ${TEMP_FILES} DESTINATION ${CMAKE_BINARY_DIR}/ext/sdl2)
 
         execute_process(COMMAND
