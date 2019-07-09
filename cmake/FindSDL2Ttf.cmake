@@ -27,7 +27,7 @@ else()
         file(COPY ${TEMP_FILES} DESTINATION ${CMAKE_BINARY_DIR}/ext/sdl2_ttf)
 
         execute_process(COMMAND
-        hdiutil detach /Volumes/temp
+        hdiutil detach /Volumes/SDL2_ttf
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/ext/)
 
         execute_process(COMMAND
