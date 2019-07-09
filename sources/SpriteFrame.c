@@ -214,7 +214,6 @@ SWError SWCreateFrameFromFile (
   {
     tempFrameP->originalSurfaceP = tempSurfaceP;
     //tempFrameP->hasAlpha = true;
-    
     err = SWUpdateFrame( tempFrameP );
   }
   
@@ -430,6 +429,7 @@ SWError SWUpdateFrame (
     
     if (blendMode == SDL_BLENDMODE_BLEND) {
       tempSurfaceP = SDL_CreateTexture(sdl2ctx.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, w, h);
+      SDL_SetTextureBlendMode(tempSurfaceP, SDL_BLENDMODE_BLEND);
     }
     else {
       tempSurfaceP = SDL_CreateTexture(sdl2ctx.renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET, w, h);

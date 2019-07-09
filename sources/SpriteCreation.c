@@ -52,12 +52,14 @@ SWError SWCreateSpriteFromSingleFileXY(
   if( ! tx )
     err = kSDLCreateSurfaceFromFile;
 
+  int w, h;
+  SDL_QueryTexture(tx, NULL, NULL, &w, &h);
+  
   // 0xfede: REMOVE | FIX
 //  SDL_BlendMode blendMode;
 //  SDL_GetTextureBlendMode(originalSurface, &blendMode);
 //
 //  if (blendMode == SDL_BLENDMODE_BLEND) {
-//    sdl_converttex
 //    surface = SDL_ConvertSurfaceFormat(originalSurface, SDL_PIXELFORMAT_ARGB8888, 0);
 //  }
 //  else {
@@ -68,9 +70,26 @@ SWError SWCreateSpriteFromSingleFileXY(
 //
 //  if ( ! surface ) err = kSDLSurfaceConversion;
 //
+
+  // texture version of above; might not even need it.
   
-  int w, h;
-  SDL_QueryTexture(tx, NULL, NULL, &w, &h);
+    SDL_BlendMode blendMode;
+    SDL_GetTextureBlendMode(tx, &blendMode);
+    SDL_Texture* tx2;
+  
+    if (blendMode == SDL_BLENDMODE_BLEND) {
+      tx2 = SDL_CreateTexture(sdl2ctx.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, w, h);
+      SDL_SetTextureBlendMode(tx2, SDL_BLENDMODE_BLEND);
+    }
+    else {
+      tx2 = SDL_CreateTexture(sdl2ctx.renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET, w, h);
+    }
+  
+    SDL_SetRenderTarget(sdl2ctx.renderer, tx2);
+    SDL_RenderCopy(sdl2ctx.renderer, tx, NULL, NULL);
+    SDL_SetRenderTarget(sdl2ctx.renderer, NULL);
+    SDL_DestroyTexture(tx);
+    tx = tx2;
   
   if( err == kNoError )
   {
