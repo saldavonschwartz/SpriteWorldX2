@@ -509,13 +509,14 @@ SWError blitStringToFrame(
   
   if( lineSkipHeight == STLineHeight_Auto )
     lineSkipHeight = TTF_FontLineSkip( font );
-  
   // draw the background. Transparent for solid or blended,
   // solid bkgnd color for smooth.
   
   uint32_t format;
   int w, h;
   SDL_QueryTexture(frameP->frameSurfaceP, &format, NULL, &w, &h);
+  format = SDL_PIXELFORMAT_ARGB8888;
+  
   SDL_PixelFormat *pformat = SDL_AllocFormat(format);
   SDL_Surface* tempsurf = SDL_CreateRGBSurfaceWithFormat(0, w, h, pformat->BitsPerPixel, format);
   
