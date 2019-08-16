@@ -533,6 +533,12 @@ SWError blitStringToFrame(
   
   lineStart = string;
   
+  if (!lineStart[0]) {
+    SDL_DestroyTexture(frameP->frameSurfaceP);
+    frameP->frameSurfaceP = SDL_CreateTextureFromSurface(sdl2ctx.renderer, tempsurf);
+    return kNoError;
+  }
+  
   // render each line, one at a time, and blit them over to our frame
   // one after another. We have to start at the last line and work
   // our way to the first, since some characters hang over to the
