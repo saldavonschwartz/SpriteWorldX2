@@ -67,6 +67,7 @@ Uint32 sdl2ctx_wflags() {
 
 void sdl2ctx_show(SDL_Texture* tx) {
   SDL_SetRenderTarget(sdl2ctx.renderer, NULL);
+  SDL_SetRenderDrawColor(sdl2ctx.renderer, 0, 0, 0, 255);
   SDL_RenderClear(sdl2ctx.renderer);
   SDL_RenderCopy(sdl2ctx.renderer, tx, NULL, NULL);
   SDL_RenderPresent(sdl2ctx.renderer);
@@ -164,7 +165,7 @@ SWError SWCreateSpriteWorld(
     return err;
   }
   
-  sdl2ctx.renderer = SDL_CreateRenderer(sdl2ctx.window, -1, SDL_RENDERER_ACCELERATED | SDL_TEXTUREACCESS_TARGET);
+  sdl2ctx.renderer = SDL_CreateRenderer(sdl2ctx.window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
   if (!sdl2ctx.renderer) {
     LOG_SDL_ERROR();
     err = kSDLSetVideoMode;
