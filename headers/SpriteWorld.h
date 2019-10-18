@@ -190,7 +190,7 @@ struct SpriteWorldRec
     int dmodeCount;
     uint32_t cmask[4];
     Uint32 (*wflags)(void);
-    void(*show)(SDL_Texture* tx)
+    void(*show)(SDL_Texture* tx);
   } SDL2Context;
   
 ///--------------------------------------------------------------------------------------

@@ -436,6 +436,9 @@ SWError SWUpdateFrame (
     }
     
     SDL_SetRenderTarget(sdl2ctx.renderer, tempSurfaceP);
+    SDL_SetRenderDrawColor(sdl2ctx.renderer, 0, 0, 0, 0);
+    SDL_RenderClear(sdl2ctx.renderer);
+
     SDL_RenderCopy(sdl2ctx.renderer, srcFrameP->originalSurfaceP, NULL, NULL);
     SDL_SetRenderTarget(sdl2ctx.renderer, NULL);
     
