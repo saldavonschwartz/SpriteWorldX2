@@ -72,7 +72,7 @@ void SWDisposeSprite(
 		{
 			if ( deadSpriteP->sharedSurface != NULL )
 			{
-				SDL_FreeSurface(deadSpriteP->sharedSurface);
+				SDL_DestroyTexture(deadSpriteP->sharedSurface);
 				deadSpriteP->sharedSurface = NULL;
 			}
 
@@ -311,27 +311,24 @@ void SWStdSpriteDrawProc(
 	
 	if (alphaBlend)
 	{
-    SDL_GetSurfaceBlendMode(srcFrameP->frameSurfaceP, &blendMode);
-    SDL_GetSurfaceAlphaMod(srcFrameP->frameSurfaceP, &alphaMod);
-    
-    SDL_SetSurfaceBlendMode(srcFrameP->frameSurfaceP, SDL_BLENDMODE_BLEND);
+    SDL_GetTextureBlendMode(srcFrameP->frameSurfaceP, &blendMode);
+    SDL_GetTextureAlphaMod(srcFrameP->frameSurfaceP, &alphaMod);
+    SDL_SetTextureBlendMode(srcFrameP->frameSurfaceP, SDL_BLENDMODE_BLEND);
     
     unsigned long alpha = gSWCurrentElementDrawData->translucencyLevel >> 8;
-    if (SDL_SetSurfaceAlphaMod(srcFrameP->frameSurfaceP, alpha) == -1) {
+    if (SDL_SetTextureAlphaMod(srcFrameP->frameSurfaceP, alpha) == -1) {
       err = kSDLSetAlpha;
     }
 	}
 		
 	if( err == kNoError )
-		err = SDL_BlitSurface(
-			srcFrameP->frameSurfaceP,
-			&srcSDLRect,
-			dstFrameP->frameSurfaceP,
-			&dstSDLRect );
-
-  if(alphaBlend) {
-    SDL_SetSurfaceBlendMode(srcFrameP->frameSurfaceP, blendMode);
-    SDL_SetSurfaceAlphaMod(srcFrameP->frameSurfaceP, alphaMod);
+    SDL_SetRenderTarget(sdl2ctx.renderer, dstFrameP->frameSurfaceP);
+    err = SDL_RenderCopy(sdl2ctx.renderer, srcFrameP->frameSurfaceP, &srcSDLRect, &dstSDLRect);
+    SDL_SetRenderTarget(sdl2ctx.renderer, NULL);
+  
+		if(alphaBlend) {
+    SDL_SetTextureBlendMode(srcFrameP->frameSurfaceP, blendMode);
+    SDL_SetTextureAlphaMod(srcFrameP->frameSurfaceP, alphaMod);
   }
 
 	SWSetStickyIfError( err );

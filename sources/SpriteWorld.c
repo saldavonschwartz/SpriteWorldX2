@@ -61,19 +61,21 @@ AssertFailProcPtr	gSWAssertFailProc = &SWAssertFail; //moved from spriteworlduti
  // 1 = RGBA, 2 = ARGB
 #define CMASK_MODE 2
 
-void sdl2ctx_show() {
-  SDL_UpdateTexture(sdl2ctx.gpuBuffer, NULL, sdl2ctx.cpuBuffer->pixels, sdl2ctx.cpuBuffer->pitch);
-  SDL_RenderClear(sdl2ctx.renderer);
-  SDL_RenderCopy(sdl2ctx.renderer, sdl2ctx.gpuBuffer, NULL, NULL);
-  SDL_RenderPresent(sdl2ctx.renderer);
-}
-
 Uint32 sdl2ctx_wflags() {
   return SDL_GetWindowFlags(sdl2ctx.window);
 }
 
+void sdl2ctx_show(SDL_Texture* tx) {
+  SDL_SetRenderTarget(sdl2ctx.renderer, NULL);
+  SDL_SetRenderDrawColor(sdl2ctx.renderer, 0, 0, 0, 255);
+  SDL_RenderClear(sdl2ctx.renderer);
+  SDL_RenderCopy(sdl2ctx.renderer, tx, NULL, NULL);
+  SDL_RenderPresent(sdl2ctx.renderer);
+}
+
 SDL2Context sdl2ctx = {
-  NULL, NULL, NULL, NULL, SDL_WINDOW_FULLSCREEN_DESKTOP, NULL, 0, 0,
+  NULL, NULL,
+  SDL_WINDOW_FULLSCREEN_DESKTOP, NULL, 0, 0,
   {
 #if (CMASK_MODE == 1)
     0xFF000000,
@@ -88,7 +90,7 @@ SDL2Context sdl2ctx = {
 #endif
   },
   
-  &sdl2ctx_show, &sdl2ctx_wflags
+  &sdl2ctx_wflags, &sdl2ctx_show
 };
 
 
@@ -163,7 +165,7 @@ SWError SWCreateSpriteWorld(
     return err;
   }
   
-  sdl2ctx.renderer = SDL_CreateRenderer(sdl2ctx.window, -1, SDL_RENDERER_ACCELERATED);
+  sdl2ctx.renderer = SDL_CreateRenderer(sdl2ctx.window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
   if (!sdl2ctx.renderer) {
     LOG_SDL_ERROR();
     err = kSDLSetVideoMode;
@@ -171,15 +173,15 @@ SWError SWCreateSpriteWorld(
     return err;
   }
   
+  SDL_GL_SetSwapInterval(0);
   SDL_SetRenderDrawColor(sdl2ctx.renderer, 0, 0, 0, 255);
   SDL_RenderClear(sdl2ctx.renderer);
   
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
   SDL_RenderSetLogicalSize(sdl2ctx.renderer, lw, lh);
+  SDL_Texture* tx = SDL_CreateTexture(sdl2ctx.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, lw, lh);
   
-  sdl2ctx.cpuBuffer = SDL_CreateRGBSurface(0, lw, lh, depth, sdl2ctx.cmask[0], sdl2ctx.cmask[1], sdl2ctx.cmask[2], sdl2ctx.cmask[3]);
-  sdl2ctx.gpuBuffer = SDL_CreateTexture(sdl2ctx.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, lw, lh);
-  err = SWCreateSpriteWorldFromVideoSurface(spriteWorldPP, sdl2ctx.cpuBuffer, &worldRect, &worldRect, 0 );
+  err = SWCreateSpriteWorldFromVideoSurface(spriteWorldPP, tx, &worldRect, &worldRect, 0 );
   
 	SWSetStickyIfError(err);
 	return err;
@@ -192,7 +194,7 @@ SWError SWCreateSpriteWorld(
 
 SWError SWCreateSpriteWorldFromVideoSurface(
 	SpriteWorldPtr		*spriteWorldPP,
-	SDL_Surface			*videoSurfaceP,
+	SDL_Texture			*videoSurfaceP,
 	SWRect				*worldRectP,
 	SWRect				*backRectP,
 	int					maxDepth )
@@ -208,19 +210,24 @@ SWError SWCreateSpriteWorldFromVideoSurface(
 	
 	*spriteWorldPP = tempSpriteWorldP = 0;
 	screenFrameP = backFrameP = workFrameP = 0;
-
+  
+  uint32_t format;
+  int w, h;
+  SDL_QueryTexture(videoSurfaceP, &format, NULL, &w, &h);
+  uint8_t bpp = SDL_BITSPERPIXEL(format);
+  
 	if (worldRectP == NULL )
 	{
-		SW_SET_RECT( windRect, 0, 0, videoSurfaceP->w, videoSurfaceP->h );
+		SW_SET_RECT( windRect, 0, 0, w, h);
 	}
 	else
 	{
 		windRect = *worldRectP;
 	}
 	
-	if ( maxDepth == 0 || videoSurfaceP->format->BitsPerPixel <= maxDepth )
+	if ( maxDepth == 0 || bpp <= maxDepth )
 	{
-		depth = videoSurfaceP->format->BitsPerPixel;
+		depth = bpp;
 	}
 	else
 	{
@@ -908,13 +915,11 @@ void SWStdOffscreenDrawProc(
 
 	SW_CONVERT_SW_TO_SDL_RECT( srcFinalRect, srcSDLRect );
 	SW_CONVERT_SW_TO_SDL_RECT( dstFinalRect, dstSDLRect );
-        
-	err = SDL_BlitSurface(
-		srcFrameP->frameSurfaceP,
-		&srcSDLRect,
-		dstFrameP->frameSurfaceP,
-		&dstSDLRect );
-	
+  
+  SDL_SetRenderTarget(sdl2ctx.renderer, dstFrameP->frameSurfaceP);
+  err = SDL_RenderCopy(sdl2ctx.renderer, srcFrameP->frameSurfaceP, &srcSDLRect, &dstSDLRect);
+  SDL_SetRenderTarget(sdl2ctx.renderer, NULL);
+  
 	SWSetStickyIfError( err );
 }
 
@@ -967,18 +972,12 @@ void SWStdScreenDrawProc(
 
 	SW_CONVERT_SW_TO_SDL_RECT( srcFinalRect, srcSDLRect );
 	SW_CONVERT_SW_TO_SDL_RECT( dstFinalRect, dstSDLRect );
-	
-	err = SDL_BlitSurface(
-		srcFrameP->frameSurfaceP,
-		&srcSDLRect,
-		dstFrameP->frameSurfaceP,
-		&dstSDLRect );
-	
-	SWSetStickyIfError( err );
   
-  // 0xfede:
-  sdl2ctx.show();
-//  SDL_UpdateRect( dstFrameP->frameSurfaceP, dstSDLRect.x, dstSDLRect.y, dstSDLRect.w, dstSDLRect.h );
+  SDL_SetRenderTarget(sdl2ctx.renderer, dstFrameP->frameSurfaceP);
+  err = SDL_RenderCopy(sdl2ctx.renderer, srcFrameP->frameSurfaceP, &srcSDLRect, &dstSDLRect);
+  SDL_SetRenderTarget(sdl2ctx.renderer, NULL);
+  
+	SWSetStickyIfError( err );
 }
 
 ///--------------------------------------------------------------------------------------
@@ -1144,24 +1143,10 @@ void SWUpdateSpriteWorld(
 	SWDisposeUpdateRectList( &spriteWorldP->headUpdateRectP );
       
 	spriteWorldP->numTilesChanged = 0;
-        
-	if( spriteWorldP->useHWDoubleBuf )
-	{
-    // 0xfede:
-    sdl2ctx.show();
-    //    SDL_Flip( SDL_GetVideoSurface() );
-		
-
-		(*spriteWorldP->screenDrawProc)(spriteWorldP->workFrameP,
-										spriteWorldP->screenFrameP,
-										&spriteWorldP->visScrollRect,
-										&spriteWorldP->screenFrameP->frameRect);
-		
-		SWDisposeUpdateRectList( &spriteWorldP->secondBufHeadUpdateRectP );
-	}
-        
-		// This is so time-based animations work correctly.
+  
+  	// This is so time-based animations work correctly.
 	SWResetMovementTimer(spriteWorldP);
+  
   gSWCurrentSpriteWorld = NULL;
 }
 
@@ -1778,17 +1763,10 @@ void SWAnimateSpriteWorld(
 	{
 		SWRemoveSpriteLayer(spriteWorldP, spriteWorldP->deadSpriteLayerP);
 	}
-	
-	if( spriteWorldP->useHWDoubleBuf )
-	{
-    // 0xfede:
-    sdl2ctx.show();
-//    SDL_Flip( SDL_GetVideoSurface() );
-		
-		spriteWorldP->headUpdateRectP = spriteWorldP->secondBufHeadUpdateRectP;
-		spriteWorldP->secondBufHeadUpdateRectP = NULL;
-	}
-	
+  
+  // 0xfede: swap screen buffer:
+  sdl2ctx.show(spriteWorldP->screenFrameP->frameSurfaceP);
+  
 	gSWCurrentSpriteWorld = NULL;
 }
 

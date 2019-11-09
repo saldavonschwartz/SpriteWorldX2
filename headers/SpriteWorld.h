@@ -183,16 +183,14 @@ struct SpriteWorldRec
   
   typedef struct {
     SDL_Renderer* renderer;
-    SDL_Texture* gpuBuffer;
-    SDL_Surface* cpuBuffer;
     SDL_Window* window;
     int fullscreenFlag;
     SDL_DisplayMode* dmodes;
     int dmodeIdx;
     int dmodeCount;
     uint32_t cmask[4];
-    void (*show)(void);
     Uint32 (*wflags)(void);
+    void(*show)(SDL_Texture* tx);
   } SDL2Context;
   
 ///--------------------------------------------------------------------------------------
@@ -225,7 +223,7 @@ SWError SWCreateSpriteWorld(
 
 SWError SWCreateSpriteWorldFromVideoSurface(
 	SpriteWorldPtr		*spriteWorldPP,
-	SDL_Surface			*videoSurfaceP,
+	SDL_Texture			*videoSurfaceP,
 	SWRect				*worldRectP,
 	SWRect				*backRectP,
 	int					maxDepth );

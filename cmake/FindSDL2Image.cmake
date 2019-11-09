@@ -1,9 +1,9 @@
 if (SDL2_IMAGE_PATH)
     message("[USING SDL2_image AT: ${SDL2_IMAGE_PATH}]")
-    
+
     if(APPLE)
-        set(SDL2_IMAGE_INCLUDE_DIR ${SDL2_IMAGE_PATH}/SDL2_image.framework/Headers) 
-        set(SDL2_IMAGE_LIB ${SDL2_IMAGE_PATH}/SDL2_image.framework) 
+        set(SDL2_IMAGE_INCLUDE_DIR ${SDL2_IMAGE_PATH}/SDL2_image.framework/Headers)
+        set(SDL2_IMAGE_LIB ${SDL2_IMAGE_PATH}/SDL2_image.framework)
     endif()
 else()
     set(SDL2_IMAGE_PATH ${CMAKE_BINARY_DIR}/ext/sdl2_image CACHE STRING "SDL2_image lib/include root path")
@@ -15,26 +15,26 @@ else()
         ${CMAKE_BINARY_DIR}/ext/temp.dmg
         SHOW_PROGRESS)
 
-        execute_process(COMMAND 
-        hdiutil attach -mountpoint temp temp.dmg
+        execute_process(COMMAND
+        hdiutil attach temp.dmg
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/ext/)
 
-        execute_process(COMMAND 
+        execute_process(COMMAND
         mkdir sdl2_image
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/ext/)
 
-        file(GLOB TEMP_FILES ${CMAKE_BINARY_DIR}/ext/temp/*)
+        file(GLOB TEMP_FILES /Volumes/SDL2_image/*)
         file(COPY ${TEMP_FILES} DESTINATION ${CMAKE_BINARY_DIR}/ext/sdl2_image)
-        
-        execute_process(COMMAND 
-        hdiutil unmount temp -force
+
+        execute_process(COMMAND
+        hdiutil detach /Volumes/SDL2_image
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/ext/)
 
-        execute_process(COMMAND 
+        execute_process(COMMAND
         rm temp.dmg
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/ext/)
-        
-        set(SDL2_IMAGE_INCLUDE_DIR ${SDL2_IMAGE_PATH}/SDL2_image.framework/Headers) 
-        set(SDL2_IMAGE_LIB ${SDL2_IMAGE_PATH}/SDL2_image.framework) 
+
+        set(SDL2_IMAGE_INCLUDE_DIR ${SDL2_IMAGE_PATH}/SDL2_image.framework/Headers)
+        set(SDL2_IMAGE_LIB ${SDL2_IMAGE_PATH}/SDL2_image.framework)
     endif()
 endif()
