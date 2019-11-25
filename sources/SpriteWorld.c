@@ -159,7 +159,7 @@ SWError SWCreateSpriteWorld(
   sdl2ctx.window = SDL_CreateWindow(NULL, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, m.w, m.h, wflags);
   
   if (!sdl2ctx.window) {
-    LOG_SDL_ERROR();
+    SW_LOG_SDL_ERROR();
     err = kSDLSetVideoMode;
     SWSetStickyIfError(err);
     return err;
@@ -167,7 +167,7 @@ SWError SWCreateSpriteWorld(
   
   sdl2ctx.renderer = SDL_CreateRenderer(sdl2ctx.window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
   if (!sdl2ctx.renderer) {
-    LOG_SDL_ERROR();
+    SW_LOG_SDL_ERROR();
     err = kSDLSetVideoMode;
     SWSetStickyIfError(err);
     return err;

@@ -46,14 +46,14 @@ extern "C" {
 #endif
 
   // 0xfede:
-#define LOG_SDL_ERROR() \
+  
+#ifndef NDEBUG
+#define SW_LOG_SDL_ERROR() \
   fprintf(stderr, "SDL error: %s\n", SDL_GetError()); \
   SDL_ClearError()
-
-#define SDL2_DATA(x) \
-  (x)? &(x)->sdl2 : &gSWCurrentSpriteWorld->sdl2
-  
-
+#else
+#define SW_LOG_SDL_ERROR()
+#endif
   
 ///--------------------------------------------------------------------------------------
 //	data structures
@@ -180,7 +180,6 @@ struct SpriteWorldRec
 };
 
   // 0xfede: SDL2 stuff
-  
   typedef struct {
     SDL_Renderer* renderer;
     SDL_Window* window;
@@ -192,14 +191,15 @@ struct SpriteWorldRec
     Uint32 (*wflags)(void);
     void(*show)(SDL_Texture* tx);
   } SDL2Context;
+// end SDL2 stuff
   
 ///--------------------------------------------------------------------------------------
 //	sprite world globals
 ///--------------------------------------------------------------------------------------
 
 // 0xfede: SDL2 stuff
-
 extern SDL2Context sdl2ctx;
+// end SDL2 stuff
   
 extern DrawDataPtr		gSWCurrentElementDrawData;
 extern SpriteWorldPtr		gSWCurrentSpriteWorld;

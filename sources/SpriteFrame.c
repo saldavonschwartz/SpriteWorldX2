@@ -204,8 +204,7 @@ SWError SWCreateFrameFromFile (
     tempSurfaceP = IMG_LoadTexture(sdl2ctx.renderer, filename);
     
     if (!tempSurfaceP) {
-      fprintf(stderr, "SDL error: %s\n", SDL_GetError());
-      SDL_ClearError();
+      SW_LOG_SDL_ERROR();
       err = kSDLCreateSurfaceFromFile;
     }
   }
