@@ -1,16 +1,24 @@
 cmake_minimum_required(VERSION 3.12)
+
+macro(CHECK_VAR_IS_SET Var)
+if(NOT DEFINED ${Var})
+  message(FATAL_ERROR "${Var} not set. Set it before invoking CMake")
+else()
+  message(STATUS "Using ${Var} = ${${Var}}")
+endif()
+endmacro(CHECK_VAR_IS_SET)
+
+CHECK_VAR_IS_SET(SDL2_LIB)
+CHECK_VAR_IS_SET(SDL2_TTF_LIB)
+CHECK_VAR_IS_SET(SDL2_IMAGE_LIB)
+
 project(SpriteWorldX2)
 set(LIB_NAME swx2)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
-
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
-find_package(SDL2 REQUIRED)
-find_package(SDL2Image REQUIRED)
-find_package(SDL2Ttf REQUIRED)
 
-add_library(${LIB_NAME} STATIC 
+add_library(${LIB_NAME} STATIC
 sources/SpriteWorld.c
 sources/Sprite.c
 sources/SpriteCreation.c
@@ -57,25 +65,26 @@ headers/SWIncludes.h
 headers/SWCommonHeaders.h
 
 contrib/StaticText.h
-contrib/StaticText.c 
+contrib/StaticText.c
 )
 
-target_include_directories(${LIB_NAME} 
+target_include_directories(${LIB_NAME}
 PUBLIC
-${PROJECT_SOURCE_DIR}/contrib 
+${PROJECT_SOURCE_DIR}/contrib
 ${PROJECT_SOURCE_DIR}/headers
 ${PROJECT_SOURCE_DIR}/Utils
+${OSX_STUFFS}
 )
 
-target_include_directories(${LIB_NAME} 
-PUBLIC 
-${SDL2_INCLUDE_DIR}
-${SDL2_IMAGE_INCLUDE_DIR}
-${SDL2_TTF_INCLUDE_DIR}
-)
-
-target_link_libraries(${LIB_NAME} 
+target_include_directories(${LIB_NAME}
+PUBLIC
 ${SDL2_LIB}
-${SDL2_IMAGE_LIB}
 ${SDL2_TTF_LIB}
+${SDL2_IMAGE_LIB}
+)
+
+target_link_libraries(${LIB_NAME}
+${SDL2_LIB}
+${SDL2_TTF_LIB}
+${SDL2_IMAGE_LIB}
 )

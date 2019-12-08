@@ -6,8 +6,8 @@
 //  Created: 07/15/03
 ///--------------------------------------------------------------------------------------
 
-#include <SDL.h>
-#include <SDL_ttf.h>
+#include <SDL2/SDL.h>
+#include <SDL2_ttf/SDL_ttf.h>
 #include <SWIncludes.h>
 
 #include "StaticText.h"
