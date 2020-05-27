@@ -16,7 +16,7 @@
 #include <assert.h>
 
 #ifndef _SDL_H
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #endif
 
 
