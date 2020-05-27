@@ -110,8 +110,10 @@ SWError SWEnterSpriteWorld(int shouldInitSDL)
   sdl2ctx.dmodeCount = SDL_GetNumDisplayModes(0);
   sdl2ctx.dmodes = malloc(sizeof(SDL_DisplayMode) * sdl2ctx.dmodeCount);
   
-  for (int i = 0; i < sdl2ctx.dmodeCount; i++){
-    SDL_GetDisplayMode(0, i, &sdl2ctx.dmodes[i]);
+  for (int i = sdl2ctx.dmodeCount - 1; i >= 0; i--){
+    SDL_DisplayMode m;
+    SDL_GetDisplayMode(0, i, &m);
+    sdl2ctx.dmodes[sdl2ctx.dmodeCount - 1 - i] = m;
   }
   
 	gSWInitialedSDL = shouldInitSDL;
@@ -137,8 +139,9 @@ SWError SWCreateSpriteWorld(
   
   SDL_DisplayMode m;
   
-  for (sdl2ctx.dmodeIdx = sdl2ctx.dmodeCount - 1; sdl2ctx.dmodeIdx >= 0; sdl2ctx.dmodeIdx--) {
+  for (sdl2ctx.dmodeIdx = 0; sdl2ctx.dmodeIdx < sdl2ctx.dmodeCount; sdl2ctx.dmodeIdx++) {
     m = sdl2ctx.dmodes[sdl2ctx.dmodeIdx];
+    
     if (m.w >= w && m.h >= h) {
       break;
     }
