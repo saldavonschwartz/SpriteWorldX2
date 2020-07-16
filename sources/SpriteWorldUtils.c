@@ -67,6 +67,6 @@ int SectSWRect( SWRect *rect1, SWRect *rect2, SWRect *outSectRect )
 
 void ReportError( SWError err, char *fileName, char *functionName, int lineNumber)
 {
-	fprintf( stderr, "Fatal error (#%d).\n  File:%s\n  Function:%s\n  Line:%s\n",
+	fprintf( stderr, "Fatal error (#%d).\n  File:%s\n  Function:%s\n  Line:%i\n",
 		err, fileName, functionName, lineNumber );
 }

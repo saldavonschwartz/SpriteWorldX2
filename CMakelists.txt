@@ -73,15 +73,23 @@ PUBLIC
 ${PROJECT_SOURCE_DIR}/contrib
 ${PROJECT_SOURCE_DIR}/headers
 ${PROJECT_SOURCE_DIR}/Utils
-${OSX_STUFFS}
 )
 
-target_include_directories(${LIB_NAME}
-PUBLIC
-${SDL2_LIB}
-${SDL2_TTF_LIB}
-${SDL2_IMAGE_LIB}
-)
+if(APPLE)
+    target_include_directories(${LIB_NAME}
+    PUBLIC
+    ${SDL2_LIB}
+    ${SDL2_TTF_LIB}
+    ${SDL2_IMAGE_LIB}
+    )
+elseif(WIN32)
+    target_include_directories(${LIB_NAME}
+    PUBLIC
+    ${SDL2_H}
+    ${SDL2_ttf_H}
+    ${SDL2_image_H}
+    )
+endif()
 
 target_link_libraries(${LIB_NAME}
 ${SDL2_LIB}
