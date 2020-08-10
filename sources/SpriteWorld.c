@@ -647,10 +647,9 @@ SpriteLayerPtr SWGetNextSpriteLayer(
 
 DrawDataPtr SWCreateDrawData (void)
 {
-	DrawDataPtr newDrawData;
-
-	newDrawData = (DrawDataPtr)calloc(1,sizeof(DrawDataRec));
-	if (newDrawData != 0) {
+	DrawDataPtr newDrawData = calloc(1, sizeof(DrawDataRec));
+	
+  if (newDrawData != NULL) {
 		newDrawData->parentSpriteP =  0;
 		newDrawData->horizLoc = 0;
 		newDrawData->vertLoc = 0;

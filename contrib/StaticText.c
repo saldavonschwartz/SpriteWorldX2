@@ -536,6 +536,7 @@ SWError blitStringToFrame(
   if (!lineStart[0]) {
     SDL_DestroyTexture(frameP->frameSurfaceP);
     frameP->frameSurfaceP = SDL_CreateTextureFromSurface(sdl2ctx.renderer, tempsurf);
+    SDL_FreeSurface(tempsurf);
     return kNoError;
   }
   
