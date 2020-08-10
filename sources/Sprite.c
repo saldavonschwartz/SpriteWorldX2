@@ -77,11 +77,17 @@ void SWDisposeSprite(
 			}
 
 		}
-
-		free(deadSpriteP->frameArray);
-		deadSpriteP->frameArray = NULL;
-		
-		
+    
+    if (deadSpriteP->drawData) {
+      free(deadSpriteP->drawData);
+      deadSpriteP->drawData = NULL;
+    }
+    
+    if (deadSpriteP->frameArray) {
+      free(deadSpriteP->frameArray);
+      deadSpriteP->frameArray = NULL;
+    }
+    
 		free(deadSpriteP);
 
 		*deadSpritePP = NULL;	// Set the original pointer to NULL

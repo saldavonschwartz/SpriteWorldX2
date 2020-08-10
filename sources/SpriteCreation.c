@@ -334,18 +334,24 @@ SWError SWCreateSprite(
       
       tempSpriteP->drawData = SWCreateDrawData();
       
-      tempSpriteP->doFastMovingCheck = false;
-      
-      tempSpriteP->drawData->parentSpriteP = tempSpriteP;
-      tempSpriteP->drawData->rotationOffsetHoriz = 0.0f;
-      tempSpriteP->drawData->rotationOffsetVert = 0.0f;
-      
-      tempSpriteP->userData = 0;
-      
-      *newSpriteP = tempSpriteP;
+      if (tempSpriteP->drawData == NULL) {
+        free(tempSpriteP->drawData);
+        free(tempSpriteP);
+        err = kMemoryAllocationError;
+      }
+      else {
+        tempSpriteP->doFastMovingCheck = false;
+        tempSpriteP->drawData->parentSpriteP = tempSpriteP;
+        tempSpriteP->drawData->rotationOffsetHoriz = 0.0f;
+        tempSpriteP->drawData->rotationOffsetVert = 0.0f;
+        tempSpriteP->userData = 0;
+        *newSpriteP = tempSpriteP;
+      }
     }
-    else
+    else {
+      free(tempSpriteP);
       err = kMemoryAllocationError;
+    }
   }
   else
   {
